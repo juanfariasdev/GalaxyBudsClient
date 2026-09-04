@@ -737,4 +737,8 @@ Detalhes:</sys:String>
     <sys:String x:Key="spatial_broadcast_opentrack_desc">Envia pacotes UDP FreeTrack / OpenTrack para localhost:4242 para simuladores de voo/corrida</sys:String>
     <sys:String x:Key="spatial_tracking_active">Rastreamento ativo</sys:String>
     <sys:String x:Key="spatial_tracking_inactive">Rastreamento desativado</sys:String>
+    <sys:String x:Key="spatial_speaker_angle">Largura do Palco Sonoro Virtual</sys:String>
+    <sys:String x:Key="spatial_speaker_angle_desc">Ajusta a abertura estéreo dos alto-falantes frontais virtuais</sys:String>
+    <sys:String x:Key="spatial_ambience">Ambiência de Sala</sys:String>
+    <sys:String x:Key="spatial_ambience_desc">Simula reflexões acústicas de estúdio para projetar o som fora da cabeça</sys:String>
 </ResourceDictionary>

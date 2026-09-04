@@ -15,7 +15,6 @@ public partial class SpatialAudioPageViewModel : MainPageViewModelBase, IDisposa
 {
     private readonly OscSpatialBroadcaster _oscBroadcaster = new();
     private readonly OpenTrackBroadcaster _openTrackBroadcaster = new();
-    private readonly BinauralDemoAudioPlayer _demoPlayer = new();
 
     [Reactive] private bool _isTrackingEnabled;
     [Reactive] private double _yaw;
@@ -25,16 +24,32 @@ public partial class SpatialAudioPageViewModel : MainPageViewModelBase, IDisposa
     [Reactive] private bool _isOpenTrackBroadcasting;
     [Reactive] private bool _isDemoPlaying;
     [Reactive] private string _statusText = Strings.SpatialTrackingInactive;
+    [Reactive] private double _speakerAngle = 30.0;
+    [Reactive] private double _ambiencePercent = 12.0;
 
     public SpatialAudioPageViewModel()
     {
         SpatialAudioService.Instance.OrientationUpdated += OnOrientationUpdated;
         SpatialAudioService.Instance.PropertyChanged += OnServicePropertyChanged;
-        _demoPlayer.PlaybackStateChanged += OnPlaybackStateChanged;
+        SpatialMediaPlayer.Instance.PropertyChanged += OnMediaPlayerPropertyChanged;
         PropertyChanged += OnSelfPropertyChanged;
 
         IsTrackingEnabled = SpatialAudioService.Instance.IsActive;
+        IsDemoPlaying = SpatialMediaPlayer.Instance.IsPlaying;
+        SpeakerAngle = SpatialMediaPlayer.Instance.VirtualSpeakerAngle;
+        AmbiencePercent = Math.Round(SpatialMediaPlayer.Instance.AmbienceAmount * 100.0);
         UpdateStatusText();
+    }
+
+    private void OnMediaPlayerPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SpatialMediaPlayer.IsPlaying))
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                IsDemoPlaying = SpatialMediaPlayer.Instance.IsPlaying;
+            });
+        }
     }
 
     private void OnServicePropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -72,6 +87,14 @@ public partial class SpatialAudioPageViewModel : MainPageViewModelBase, IDisposa
             case nameof(IsOpenTrackBroadcasting):
                 _openTrackBroadcaster.IsEnabled = IsOpenTrackBroadcasting;
                 break;
+
+            case nameof(SpeakerAngle):
+                SpatialMediaPlayer.Instance.VirtualSpeakerAngle = (float)SpeakerAngle;
+                break;
+
+            case nameof(AmbiencePercent):
+                SpatialMediaPlayer.Instance.AmbienceAmount = (float)(AmbiencePercent / 100.0);
+                break;
         }
     }
 
@@ -85,24 +108,16 @@ public partial class SpatialAudioPageViewModel : MainPageViewModelBase, IDisposa
         }, DispatcherPriority.Render);
     }
 
-    private void OnPlaybackStateChanged(object? sender, bool isPlaying)
-    {
-        Dispatcher.UIThread.Post(() =>
-        {
-            IsDemoPlaying = isPlaying;
-        });
-    }
-
     public void Recenter()
     {
         SpatialAudioService.Instance.Recenter();
     }
 
-    public async void ToggleDemo()
+    public void ToggleDemo()
     {
-        if (IsDemoPlaying)
+        if (SpatialMediaPlayer.Instance.IsPlaying)
         {
-            _demoPlayer.Stop();
+            SpatialMediaPlayer.Instance.Stop();
         }
         else
         {
@@ -110,7 +125,7 @@ public partial class SpatialAudioPageViewModel : MainPageViewModelBase, IDisposa
             {
                 IsTrackingEnabled = true;
             }
-            await _demoPlayer.StartAsync();
+            SpatialMediaPlayer.Instance.Play();
         }
     }
 
@@ -119,12 +134,21 @@ public partial class SpatialAudioPageViewModel : MainPageViewModelBase, IDisposa
         StatusText = IsTrackingEnabled ? Strings.SpatialTrackingActive : Strings.SpatialTrackingInactive;
     }
 
+    public override void OnNavigatedTo()
+    {
+        base.OnNavigatedTo();
+        if (SpatialAudioService.Instance.IsSupported && !SpatialAudioService.Instance.IsActive)
+        {
+            IsTrackingEnabled = true;
+        }
+    }
+
     public override void OnNavigatedFrom()
     {
         base.OnNavigatedFrom();
-        if (IsDemoPlaying)
+        if (SpatialMediaPlayer.Instance.IsPlaying)
         {
-            _demoPlayer.Stop();
+            SpatialMediaPlayer.Instance.Stop();
         }
     }
 
@@ -138,8 +162,8 @@ public partial class SpatialAudioPageViewModel : MainPageViewModelBase, IDisposa
     {
         SpatialAudioService.Instance.OrientationUpdated -= OnOrientationUpdated;
         SpatialAudioService.Instance.PropertyChanged -= OnServicePropertyChanged;
-        _demoPlayer.PlaybackStateChanged -= OnPlaybackStateChanged;
-        _demoPlayer.Dispose();
+        SpatialMediaPlayer.Instance.PropertyChanged -= OnMediaPlayerPropertyChanged;
+        SpatialMediaPlayer.Instance.Stop();
         _oscBroadcaster.Dispose();
         _openTrackBroadcaster.Dispose();
         GC.SuppressFinalize(this);

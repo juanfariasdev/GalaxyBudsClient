@@ -136,6 +136,25 @@
                     IsChecked="{Binding IsTrackingEnabled}" />
             </controls:SettingsGroup>
 
+            <!-- 360 Acoustic Soundstage Configuration -->
+            <controls:SettingsGroup>
+                <controls:SettingsSliderItem
+                    Content="{ext:Translate {x:Static i18N:Keys.SpatialSpeakerAngle}}"
+                    Description="{ext:Translate {x:Static i18N:Keys.SpatialSpeakerAngleDesc}}"
+                    Symbol="Speaker2"
+                    Minimum="15"
+                    Maximum="75"
+                    Value="{Binding SpeakerAngle}" />
+
+                <controls:SettingsSliderItem
+                    Content="{ext:Translate {x:Static i18N:Keys.SpatialAmbience}}"
+                    Description="{ext:Translate {x:Static i18N:Keys.SpatialAmbienceDesc}}"
+                    Symbol="SoundWaveCircle"
+                    Minimum="0"
+                    Maximum="40"
+                    Value="{Binding AmbiencePercent}" />
+            </controls:SettingsGroup>
+
             <!-- External Integrations (OSC / OpenTrack) -->
             <controls:SettingsGroup>
                 <controls:SettingsSwitchItem

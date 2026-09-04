@@ -750,4 +750,8 @@ The name change may not be detected by devices (including this one) until you un
     <sys:String x:Key="spatial_broadcast_opentrack_desc">Sends FreeTrack / OpenTrack UDP packets to localhost:4242 for flight/driving sims</sys:String>
     <sys:String x:Key="spatial_tracking_active">Tracking active</sys:String>
     <sys:String x:Key="spatial_tracking_inactive">Tracking stopped</sys:String>
+    <sys:String x:Key="spatial_speaker_angle">Virtual Soundstage Width</sys:String>
+    <sys:String x:Key="spatial_speaker_angle_desc">Adjusts the stereo angle of the virtual front speakers</sys:String>
+    <sys:String x:Key="spatial_ambience">Room Ambience</sys:String>
+    <sys:String x:Key="spatial_ambience_desc">Simulates studio acoustic reflections to externalize sound</sys:String>
 </ResourceDictionary>

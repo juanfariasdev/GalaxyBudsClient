@@ -156,6 +156,10 @@ public sealed class SpatialAudioService : ReactiveObject, IDisposable
         {
             _referenceQuaternion = _filteredQuaternion;
             _hasReference = true;
+            CurrentYaw = 0;
+            CurrentPitch = 0;
+            CurrentRoll = 0;
+            OrientationUpdated?.Invoke(this, new SpatialOrientationEventArgs(0, 0, 0, Quaternion.Identity, _filteredQuaternion));
             Log.Debug("SpatialAudioService: Recentered / Tared orientation to {Reference}", _referenceQuaternion);
         }
     }
@@ -172,14 +176,16 @@ public sealed class SpatialAudioService : ReactiveObject, IDisposable
         // Slerp smoothing (factor 0.35 gives responsive feel with zero jitter)
         _filteredQuaternion = Quaternion.Slerp(_filteredQuaternion, raw, 0.35f);
 
-        // Compute relative rotation: q_rel = q_ref^-1 * q_current
+        // Compute relative rotation in world frame: R_world = q_current * q_reference^-1
+        // This decouples head rotations (around vertical gravity axis) cleanly from earbud placement
         var invRef = Quaternion.Inverse(_referenceQuaternion);
-        var relQuat = Quaternion.Normalize(Quaternion.Multiply(invRef, _filteredQuaternion));
+        var relQuat = Quaternion.Normalize(Quaternion.Multiply(_filteredQuaternion, invRef));
 
         // Convert to Euler angles (Roll, Pitch, Yaw)
         var (rollRad, pitchRad, yawRad) = relQuat.ToRollPitchYaw();
 
-        var yawDeg = (float)(yawRad * (180.0 / Math.PI));
+        // Yaw: positive when head turns RIGHT, negative when head turns LEFT (standard OpenTrack/aviation convention)
+        var yawDeg = -(float)(yawRad * (180.0 / Math.PI));
         var pitchDeg = (float)(pitchRad * (180.0 / Math.PI));
         var rollDeg = (float)(rollRad * (180.0 / Math.PI));
 
