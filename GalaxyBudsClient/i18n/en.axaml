@@ -733,4 +733,21 @@ Details:</sys:String>
     <sys:String x:Key="rename_ok_title">Earbuds renamed</sys:String>
     <sys:String x:Key="rename_ok">Successfully renamed your earbuds!
 The name change may not be detected by devices (including this one) until you un-pair and re-pair your earbuds.</sys:String>
+
+    <!--360 Audio / Spatial Audio-->
+    <sys:String x:Key="page_spatial_audio">360 Audio</sys:String>
+    <sys:String x:Key="spatial_audio_desc">Dynamic head tracking and 360 spatial sound</sys:String>
+    <sys:String x:Key="spatial_enable">Enable Head Tracking</sys:String>
+    <sys:String x:Key="spatial_enable_desc">Activates internal motion sensors to track head orientation</sys:String>
+    <sys:String x:Key="spatial_recenter">Recenter Heading</sys:String>
+    <sys:String x:Key="spatial_recenter_desc">Resets front orientation to where you are currently looking</sys:String>
+    <sys:String x:Key="spatial_demo_play">Play 360 Audio Demo</sys:String>
+    <sys:String x:Key="spatial_demo_stop">Stop 360 Audio Demo</sys:String>
+    <sys:String x:Key="spatial_demo_desc">Plays an interactive spatial chime that moves in 3D around you as you turn your head</sys:String>
+    <sys:String x:Key="spatial_broadcast_osc">Broadcast via OSC (DAWs / Plugins)</sys:String>
+    <sys:String x:Key="spatial_broadcast_osc_desc">Sends real-time yaw, pitch, roll and quaternion to localhost:9000</sys:String>
+    <sys:String x:Key="spatial_broadcast_opentrack">Broadcast to Games (OpenTrack)</sys:String>
+    <sys:String x:Key="spatial_broadcast_opentrack_desc">Sends FreeTrack / OpenTrack UDP packets to localhost:4242 for flight/driving sims</sys:String>
+    <sys:String x:Key="spatial_tracking_active">Tracking active</sys:String>
+    <sys:String x:Key="spatial_tracking_inactive">Tracking stopped</sys:String>
 </ResourceDictionary>

@@ -1,0 +1,164 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:GalaxyBudsClient.Interface.Controls"
+             xmlns:ext="clr-namespace:GalaxyBudsClient.Interface.MarkupExtensions"
+             xmlns:fluent="clr-namespace:FluentIcons.Avalonia.Fluent;assembly=FluentIcons.Avalonia.Fluent"
+             xmlns:pages="clr-namespace:GalaxyBudsClient.Interface.ViewModels.Pages"
+             xmlns:i18N="clr-namespace:GalaxyBudsClient.Generated.I18N"
+             mc:Ignorable="d" d:DesignWidth="800"
+             x:Class="GalaxyBudsClient.Interface.Pages.SpatialAudioPage"
+             x:DataType="pages:SpatialAudioPageViewModel"
+             x:CompileBindings="True">
+
+    <Design.DataContext>
+        <pages:SpatialAudioPageViewModel />
+    </Design.DataContext>
+
+    <ScrollViewer>
+        <StackPanel Spacing="12" Margin="{StaticResource AppPageMargin}">
+            <Interaction.Behaviors>
+                <ext:RequiresConnectedDeviceBehavior />
+                <ext:RequiresFeatureBehavior Feature="SpatialSensor" />
+            </Interaction.Behaviors>
+
+            <!-- 3D Head Tracking Visualizer Card -->
+            <Border Classes="Card" ClipToBounds="True" Padding="16">
+                <StackPanel Spacing="14">
+                    <!-- Header with title and status badge -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <fluent:SymbolIcon Symbol="SoundWaveCircle" FontSize="20" Foreground="{DynamicResource SystemAccentColor}" />
+                            <TextBlock Text="{ext:Translate {x:Static i18N:Keys.PageSpatialAudio}}"
+                                       FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <Border Grid.Column="1"
+                                Background="{DynamicResource CardStrokeColorDefaultBrush}"
+                                CornerRadius="12"
+                                Padding="10,4">
+                            <TextBlock Text="{Binding StatusText}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
+
+                    <!-- Custom 3D Vector Visualizer -->
+                    <controls:HeadVisualizerControl Height="210"
+                                                    Yaw="{Binding Yaw}"
+                                                    Pitch="{Binding Pitch}"
+                                                    Roll="{Binding Roll}"
+                                                    IsActive="{Binding IsTrackingEnabled}"
+                                                    HorizontalAlignment="Stretch" />
+
+                    <!-- Live Euler Angles Pill Readouts -->
+                    <UniformGrid Columns="3" Margin="8,0">
+                        <Border Background="{DynamicResource ControlFillColorDefaultBrush}"
+                                CornerRadius="8" Padding="12,8" Margin="4">
+                            <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                <TextBlock Text="YAW (Giro)" FontSize="11"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding Yaw, StringFormat='{}{0:0.0}°'}"
+                                           FontSize="15" FontWeight="Bold"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{DynamicResource ControlFillColorDefaultBrush}"
+                                CornerRadius="8" Padding="12,8" Margin="4">
+                            <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                <TextBlock Text="PITCH (Inclinação)" FontSize="11"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding Pitch, StringFormat='{}{0:0.0}°'}"
+                                           FontSize="15" FontWeight="Bold"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Background="{DynamicResource ControlFillColorDefaultBrush}"
+                                CornerRadius="8" Padding="12,8" Margin="4">
+                            <StackPanel HorizontalAlignment="Center" Spacing="2">
+                                <TextBlock Text="ROLL (Tombamento)" FontSize="11"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           HorizontalAlignment="Center" />
+                                <TextBlock Text="{Binding Roll, StringFormat='{}{0:0.0}°'}"
+                                           FontSize="15" FontWeight="Bold"
+                                           HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <!-- Control Buttons -->
+                    <Grid ColumnDefinitions="*,*" Margin="4,0" ColumnSpacing="12">
+                        <Button Grid.Column="0"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Command="{Binding Recenter}"
+                                IsEnabled="{Binding IsTrackingEnabled}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <fluent:SymbolIcon Symbol="CompassNorthwest" FontSize="16" />
+                                <TextBlock Text="{ext:Translate {x:Static i18N:Keys.SpatialRecenter}}"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Grid.Column="1"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Command="{Binding ToggleDemo}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <fluent:SymbolIcon Symbol="Play" FontSize="16"
+                                                   IsVisible="{Binding !IsDemoPlaying}" />
+                                <fluent:SymbolIcon Symbol="Pause" FontSize="16"
+                                                   IsVisible="{Binding IsDemoPlaying}" />
+                                <TextBlock Text="{ext:Translate {x:Static i18N:Keys.SpatialDemoPlay}}"
+                                           IsVisible="{Binding !IsDemoPlaying}"
+                                           VerticalAlignment="Center" />
+                                <TextBlock Text="{ext:Translate {x:Static i18N:Keys.SpatialDemoStop}}"
+                                           IsVisible="{Binding IsDemoPlaying}"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Head Tracking Hardware Controls -->
+            <controls:SettingsGroup>
+                <controls:SettingsSwitchItem
+                    Content="{ext:Translate {x:Static i18N:Keys.SpatialEnable}}"
+                    Description="{ext:Translate {x:Static i18N:Keys.SpatialEnableDesc}}"
+                    Symbol="CompassNorthwest"
+                    IsChecked="{Binding IsTrackingEnabled}" />
+            </controls:SettingsGroup>
+
+            <!-- External Integrations (OSC / OpenTrack) -->
+            <controls:SettingsGroup>
+                <controls:SettingsSwitchItem
+                    Content="{ext:Translate {x:Static i18N:Keys.SpatialBroadcastOsc}}"
+                    Description="{ext:Translate {x:Static i18N:Keys.SpatialBroadcastOscDesc}}"
+                    Symbol="SoundWaveCircle"
+                    IsChecked="{Binding IsOscBroadcasting}"
+                    IsEnabled="{Binding IsTrackingEnabled}" />
+
+                <controls:SettingsSwitchItem
+                    Content="{ext:Translate {x:Static i18N:Keys.SpatialBroadcastOpentrack}}"
+                    Description="{ext:Translate {x:Static i18N:Keys.SpatialBroadcastOpentrackDesc}}"
+                    Symbol="Navigation"
+                    IsChecked="{Binding IsOpenTrackBroadcasting}"
+                    IsEnabled="{Binding IsTrackingEnabled}" />
+            </controls:SettingsGroup>
+
+            <!-- Info Bar -->
+            <controls:CustomInfoBar Title="{ext:Translate {x:Static i18N:Keys.PageSpatialAudio}}"
+                                    IsClosable="False"
+                                    IsOpen="True"
+                                    Severity="Informational"
+                                    Message="{ext:Translate {x:Static i18N:Keys.SpatialDemoDesc}}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
