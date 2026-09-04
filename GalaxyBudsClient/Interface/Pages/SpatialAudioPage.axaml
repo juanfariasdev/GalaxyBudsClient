@@ -144,7 +144,7 @@
                     Symbol="Speaker2"
                     Minimum="15"
                     Maximum="75"
-                    Value="{Binding SpeakerAngle}" />
+                    Value="{Binding SpeakerAngle, Mode=TwoWay}" />
 
                 <controls:SettingsSliderItem
                     Content="{ext:Translate {x:Static i18N:Keys.SpatialAmbience}}"
@@ -152,7 +152,7 @@
                     Symbol="SoundWaveCircle"
                     Minimum="0"
                     Maximum="40"
-                    Value="{Binding AmbiencePercent}" />
+                    Value="{Binding AmbiencePercent, Mode=TwoWay}" />
             </controls:SettingsGroup>
 
             <!-- External Integrations (OSC / OpenTrack) -->

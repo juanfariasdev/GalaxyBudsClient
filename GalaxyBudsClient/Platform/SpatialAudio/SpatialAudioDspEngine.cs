@@ -135,13 +135,26 @@ public sealed class SpatialAudioDspEngine
             sampleRL = ApplyHeadShadowFilter(sampleRL, cutoffR_to_L, ref _filterRL) * gainR_to_L;
             sampleRR = ApplyHeadShadowFilter(sampleRR, cutoffR_to_R, ref _filterRR) * gainR_to_R;
 
-            // Subtle early reflections to simulate studio room acoustic cues
-            var earlyRefL = ReadFractionalDelay(_delayBufferLeftIn, _writeIndex, delayL_to_L + 120.0f) * AmbienceAmount;
-            var earlyRefR = ReadFractionalDelay(_delayBufferRightIn, _writeIndex, delayR_to_R + 140.0f) * AmbienceAmount;
+            // Multi-tap room early reflection cluster simulating acoustic walls & floor:
+            // Tap 1: Cross-wall early bounce (~3.6 ms, 160 samples)
+            // Tap 2: Rear wall reflection (~8.2 ms, 360 samples)
+            // Tap 3: Floor / ceiling reflection (~15 ms, 660 samples)
+            var refl1_L = ReadFractionalDelay(_delayBufferRightIn, _writeIndex, 160.0f);
+            var refl1_R = ReadFractionalDelay(_delayBufferLeftIn, _writeIndex, 160.0f);
 
-            // Sum outputs for Left Ear and Right Ear
-            var outL = sampleLL + sampleRL + (earlyRefR * 0.5f);
-            var outR = sampleLR + sampleRR + (earlyRefL * 0.5f);
+            var refl2_L = ReadFractionalDelay(_delayBufferLeftIn, _writeIndex, 360.0f);
+            var refl2_R = ReadFractionalDelay(_delayBufferRightIn, _writeIndex, 360.0f);
+
+            var refl3_L = ReadFractionalDelay(_delayBufferRightIn, _writeIndex, 660.0f);
+            var refl3_R = ReadFractionalDelay(_delayBufferLeftIn, _writeIndex, 660.0f);
+
+            var roomL = ((refl1_L * 0.5f) + (refl2_L * 0.35f) + (refl3_L * 0.25f)) * (AmbienceAmount * 2.5f);
+            var roomR = ((refl1_R * 0.5f) + (refl2_R * 0.35f) + (refl3_R * 0.25f)) * (AmbienceAmount * 2.5f);
+
+            // Sum outputs for Left Ear and Right Ear with natural acoustic wet/dry balance
+            var directMix = 1.0f - (AmbienceAmount * 0.35f);
+            var outL = ((sampleLL + sampleRL) * directMix) + roomL;
+            var outR = ((sampleLR + sampleRR) * directMix) + roomR;
 
             // Soft clipper to prevent any digital distortion
             output[inIdx] = SoftClip(outL);

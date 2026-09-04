@@ -7,7 +7,9 @@ using GalaxyBudsClient.Generated.I18N;
 using GalaxyBudsClient.Interface.Pages;
 using GalaxyBudsClient.Model;
 using GalaxyBudsClient.Platform.SpatialAudio;
+using System.Threading.Tasks;
 using ReactiveUI.SourceGenerators;
+using Serilog;
 
 namespace GalaxyBudsClient.Interface.ViewModels.Pages;
 
@@ -24,8 +26,8 @@ public partial class SpatialAudioPageViewModel : MainPageViewModelBase, IDisposa
     [Reactive] private bool _isOpenTrackBroadcasting;
     [Reactive] private bool _isDemoPlaying;
     [Reactive] private string _statusText = Strings.SpatialTrackingInactive;
-    [Reactive] private double _speakerAngle = 30.0;
-    [Reactive] private double _ambiencePercent = 12.0;
+    [Reactive] private int _speakerAngle = 30;
+    [Reactive] private int _ambiencePercent = 12;
 
     public SpatialAudioPageViewModel()
     {
@@ -36,8 +38,8 @@ public partial class SpatialAudioPageViewModel : MainPageViewModelBase, IDisposa
 
         IsTrackingEnabled = SpatialAudioService.Instance.IsActive;
         IsDemoPlaying = SpatialMediaPlayer.Instance.IsPlaying;
-        SpeakerAngle = SpatialMediaPlayer.Instance.VirtualSpeakerAngle;
-        AmbiencePercent = Math.Round(SpatialMediaPlayer.Instance.AmbienceAmount * 100.0);
+        SpeakerAngle = (int)Math.Round(SpatialMediaPlayer.Instance.VirtualSpeakerAngle);
+        AmbiencePercent = (int)Math.Round(SpatialMediaPlayer.Instance.AmbienceAmount * 100.0);
         UpdateStatusText();
     }
 
@@ -90,10 +92,12 @@ public partial class SpatialAudioPageViewModel : MainPageViewModelBase, IDisposa
 
             case nameof(SpeakerAngle):
                 SpatialMediaPlayer.Instance.VirtualSpeakerAngle = (float)SpeakerAngle;
+                Log.Debug("SpatialAudioPageViewModel: SpeakerAngle updated to {Angle}°", SpeakerAngle);
                 break;
 
             case nameof(AmbiencePercent):
                 SpatialMediaPlayer.Instance.AmbienceAmount = (float)(AmbiencePercent / 100.0);
+                Log.Debug("SpatialAudioPageViewModel: AmbiencePercent updated to {Ambience}%", AmbiencePercent);
                 break;
         }
     }
