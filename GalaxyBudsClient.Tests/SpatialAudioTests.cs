@@ -197,5 +197,17 @@ public class SpatialAudioTests
         // Right ear must receive significantly more energy than left ear (head shadow + ILD)
         energyR.Should().BeGreaterThan(energyL * 1.5f);
     }
+
+    [Test]
+    public void CoreAudioDeviceHelper_FindOutputDeviceUid_ReturnsBudsUidWhenConnected()
+    {
+        if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX))
+            return;
+
+        var uid = CoreAudioDeviceHelper.FindOutputDeviceUid("Buds");
+        // On this Mac with Galaxy Buds2 Pro connected, UID must be found
+        uid.Should().NotBeNullOrEmpty();
+        uid.Should().Contain(":output");
+    }
 }
 

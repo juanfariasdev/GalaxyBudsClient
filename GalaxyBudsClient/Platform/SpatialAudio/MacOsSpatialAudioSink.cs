@@ -61,6 +61,19 @@ public sealed unsafe class MacOsSpatialAudioSink : ISpatialAudioSink
     [DllImport(AudioToolboxLib)]
     private static extern int AudioQueueDispose(IntPtr inAq, bool inImmediate);
 
+    [DllImport(AudioToolboxLib)]
+    private static extern int AudioQueueSetProperty(
+        IntPtr inAQ,
+        uint inID,
+        void* inData,
+        uint inDataSize);
+
+    [DllImport("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation", CharSet = CharSet.Unicode)]
+    private static extern IntPtr CFStringCreateWithCharacters(IntPtr alloc, string str, nint count);
+
+    [DllImport("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")]
+    private static extern void CFRelease(IntPtr cf);
+
     private const int BufferCount = 3;
     private const int BufferFrames = 1024; // ~21ms at 48kHz
     private const int ChannelCount = 2;
@@ -106,6 +119,34 @@ public sealed unsafe class MacOsSpatialAudioSink : ISpatialAudioSink
             {
                 Log.Error("MacOsSpatialAudioSink: AudioQueueNewOutput failed with error {Error}", err);
                 return;
+            }
+
+            // Route audio explicitly to Galaxy Buds so it doesn't loop back into BlackHole or system default
+            var targetUid = CoreAudioDeviceHelper.FindOutputDeviceUid("Buds");
+            if (!string.IsNullOrEmpty(targetUid))
+            {
+                var cfTargetUid = CFStringCreateWithCharacters(IntPtr.Zero, targetUid, targetUid.Length);
+                if (cfTargetUid != IntPtr.Zero)
+                {
+                    try
+                    {
+                        var pUid = cfTargetUid;
+                        // 0x61716364 = 'aqcd' (kAudioQueueProperty_CurrentDevice)
+                        var devStatus = AudioQueueSetProperty(_audioQueue, 0x61716364, &pUid, (uint)sizeof(IntPtr));
+                        if (devStatus == 0)
+                        {
+                            Log.Information("MacOsSpatialAudioSink: Áudio 360 direcionado com sucesso aos Galaxy Buds ({Uid})", targetUid);
+                        }
+                        else
+                        {
+                            Log.Warning("MacOsSpatialAudioSink: Não foi possível vincular a saída ao {Uid}, status {Status}", targetUid, devStatus);
+                        }
+                    }
+                    finally
+                    {
+                        CFRelease(cfTargetUid);
+                    }
+                }
             }
 
             var bufferBytes = (uint)(BufferFrames * ChannelCount * sizeof(float));

@@ -28,19 +28,40 @@ public partial class SpatialAudioPageViewModel : MainPageViewModelBase, IDisposa
     [Reactive] private string _statusText = Strings.SpatialTrackingInactive;
     [Reactive] private int _speakerAngle = 30;
     [Reactive] private int _ambiencePercent = 12;
+    [Reactive] private bool _isBlackHoleInstalled;
+    [Reactive] private bool _isBlackHoleLoaded;
+    [Reactive] private bool _isSystemAudioActive;
+    [Reactive] private bool _isInstallingBlackHole;
+
+    public bool IsMacOs => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX);
+    public bool IsWindows => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);
 
     public SpatialAudioPageViewModel()
     {
         SpatialAudioService.Instance.OrientationUpdated += OnOrientationUpdated;
         SpatialAudioService.Instance.PropertyChanged += OnServicePropertyChanged;
         SpatialMediaPlayer.Instance.PropertyChanged += OnMediaPlayerPropertyChanged;
+        SpatialSystemAudioStreamer.Instance.PropertyChanged += OnSystemAudioPropertyChanged;
         PropertyChanged += OnSelfPropertyChanged;
 
         IsTrackingEnabled = SpatialAudioService.Instance.IsActive;
         IsDemoPlaying = SpatialMediaPlayer.Instance.IsPlaying;
+        IsSystemAudioActive = SpatialSystemAudioStreamer.Instance.IsActive;
         SpeakerAngle = (int)Math.Round(SpatialMediaPlayer.Instance.VirtualSpeakerAngle);
         AmbiencePercent = (int)Math.Round(SpatialMediaPlayer.Instance.AmbienceAmount * 100.0);
         UpdateStatusText();
+        RefreshBlackHoleStatus();
+    }
+
+    private void OnSystemAudioPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SpatialSystemAudioStreamer.IsActive))
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                IsSystemAudioActive = SpatialSystemAudioStreamer.Instance.IsActive;
+            });
+        }
     }
 
     private void OnMediaPlayerPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -92,11 +113,13 @@ public partial class SpatialAudioPageViewModel : MainPageViewModelBase, IDisposa
 
             case nameof(SpeakerAngle):
                 SpatialMediaPlayer.Instance.VirtualSpeakerAngle = (float)SpeakerAngle;
+                SpatialSystemAudioStreamer.Instance.VirtualSpeakerAngle = (float)SpeakerAngle;
                 Log.Debug("SpatialAudioPageViewModel: SpeakerAngle updated to {Angle}°", SpeakerAngle);
                 break;
 
             case nameof(AmbiencePercent):
                 SpatialMediaPlayer.Instance.AmbienceAmount = (float)(AmbiencePercent / 100.0);
+                SpatialSystemAudioStreamer.Instance.AmbienceAmount = (float)(AmbiencePercent / 100.0);
                 Log.Debug("SpatialAudioPageViewModel: AmbiencePercent updated to {Ambience}%", AmbiencePercent);
                 break;
         }
@@ -138,9 +161,67 @@ public partial class SpatialAudioPageViewModel : MainPageViewModelBase, IDisposa
         StatusText = IsTrackingEnabled ? Strings.SpatialTrackingActive : Strings.SpatialTrackingInactive;
     }
 
+    public void RefreshBlackHoleStatus()
+    {
+        if (!IsMacOs) return;
+        IsBlackHoleInstalled = BlackHoleHelper.IsDriverInstalled;
+        IsBlackHoleLoaded = BlackHoleHelper.IsLoadedInCoreAudio();
+    }
+
+    public async Task InstallBlackHoleAsync()
+    {
+        if (IsInstallingBlackHole) return;
+        IsInstallingBlackHole = true;
+        try
+        {
+            await BlackHoleHelper.InstallViaHomebrewAsync();
+            RefreshBlackHoleStatus();
+        }
+        finally
+        {
+            IsInstallingBlackHole = false;
+        }
+    }
+
+    public void RestartCoreAudio()
+    {
+        BlackHoleHelper.RestartCoreAudio();
+        Task.Delay(1500).ContinueWith(_ =>
+        {
+            Dispatcher.UIThread.Post(RefreshBlackHoleStatus);
+        });
+    }
+
+    public void OpenAudioMidiSetup()
+    {
+        BlackHoleHelper.OpenAudioMidiSetup();
+    }
+
+    public void OpenSoundSettings()
+    {
+        BlackHoleHelper.OpenSoundSettings();
+    }
+
+    public void ToggleSystemAudio()
+    {
+        if (SpatialSystemAudioStreamer.Instance.IsActive)
+        {
+            SpatialSystemAudioStreamer.Instance.Stop();
+        }
+        else
+        {
+            if (!SpatialAudioService.Instance.IsActive)
+            {
+                IsTrackingEnabled = true;
+            }
+            SpatialSystemAudioStreamer.Instance.Start();
+        }
+    }
+
     public override void OnNavigatedTo()
     {
         base.OnNavigatedTo();
+        RefreshBlackHoleStatus();
         if (SpatialAudioService.Instance.IsSupported && !SpatialAudioService.Instance.IsActive)
         {
             IsTrackingEnabled = true;
@@ -167,7 +248,9 @@ public partial class SpatialAudioPageViewModel : MainPageViewModelBase, IDisposa
         SpatialAudioService.Instance.OrientationUpdated -= OnOrientationUpdated;
         SpatialAudioService.Instance.PropertyChanged -= OnServicePropertyChanged;
         SpatialMediaPlayer.Instance.PropertyChanged -= OnMediaPlayerPropertyChanged;
+        SpatialSystemAudioStreamer.Instance.PropertyChanged -= OnSystemAudioPropertyChanged;
         SpatialMediaPlayer.Instance.Stop();
+        SpatialSystemAudioStreamer.Instance.Stop();
         _oscBroadcaster.Dispose();
         _openTrackBroadcaster.Dispose();
         GC.SuppressFinalize(this);

@@ -172,6 +172,112 @@
                     IsEnabled="{Binding IsTrackingEnabled}" />
             </controls:SettingsGroup>
 
+            <!-- System-Wide 360 Audio (macOS & Windows) -->
+            <Border Classes="Card" Padding="16">
+                <StackPanel Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Spacing="4">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <fluent:SymbolIcon Symbol="HeadphonesSoundWave" FontSize="18" Foreground="{DynamicResource SystemAccentColor}" />
+                                <TextBlock Text="{ext:Translate {x:Static i18N:Keys.SpatialSystemAudio}}"
+                                           FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <TextBlock Text="{ext:Translate {x:Static i18N:Keys.SpatialSystemAudioDesc}}"
+                                       FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+
+                        <ToggleSwitch Grid.Column="1"
+                                      IsChecked="{Binding IsSystemAudioActive}"
+                                      Command="{Binding ToggleSystemAudio}"
+                                      VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- macOS: BlackHole Driver Detection & Controls -->
+                    <StackPanel Spacing="10" IsVisible="{Binding IsMacOs}">
+                        <Separator Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,4" />
+
+                        <!-- Status badge & install button -->
+                        <Grid ColumnDefinitions="*,Auto">
+                            <!-- Case 1: Driver installed AND active in CoreAudio -->
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center"
+                                        IsVisible="{Binding IsBlackHoleLoaded}">
+                                <fluent:SymbolIcon Symbol="CheckmarkCircle" FontSize="16" Foreground="SeaGreen" />
+                                <TextBlock Text="{ext:Translate {x:Static i18N:Keys.SpatialBlackholeStatusOk}}"
+                                           FontWeight="Medium" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <!-- Case 2: Driver file installed, but CoreAudio has not loaded it yet -->
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <StackPanel.IsVisible>
+                                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                        <Binding Path="IsBlackHoleInstalled" />
+                                        <Binding Path="!IsBlackHoleLoaded" />
+                                    </MultiBinding>
+                                </StackPanel.IsVisible>
+                                <fluent:SymbolIcon Symbol="Warning" FontSize="16" Foreground="Goldenrod" />
+                                <TextBlock Text="{ext:Translate {x:Static i18N:Keys.SpatialBlackholeStatusRestartNeeded}}"
+                                           FontWeight="Medium" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <!-- Case 3: Driver completely missing -->
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center"
+                                        IsVisible="{Binding !IsBlackHoleInstalled}">
+                                <fluent:SymbolIcon Symbol="Warning" FontSize="16" Foreground="Goldenrod" />
+                                <TextBlock Text="{ext:Translate {x:Static i18N:Keys.SpatialBlackholeStatusMissing}}"
+                                           FontWeight="Medium" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <Button Grid.Column="1"
+                                    Content="{ext:Translate {x:Static i18N:Keys.SpatialBlackholeInstall}}"
+                                    Command="{Binding InstallBlackHoleAsync}"
+                                    IsEnabled="{Binding !IsInstallingBlackHole}"
+                                    IsVisible="{Binding !IsBlackHoleInstalled}"
+                                    Classes="Accent" />
+                        </Grid>
+
+                        <!-- Missing explanation -->
+                        <TextBlock Text="{ext:Translate {x:Static i18N:Keys.SpatialBlackholeMissingDesc}}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap"
+                                   IsVisible="{Binding !IsBlackHoleInstalled}" />
+
+                        <!-- Ready how-to guide -->
+                        <TextBlock Text="{ext:Translate {x:Static i18N:Keys.SpatialBlackholeHowto}}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource SystemAccentColor}"
+                                   TextWrapping="Wrap"
+                                   IsVisible="{Binding IsBlackHoleLoaded}" />
+
+                        <!-- Actions when BlackHole is installed -->
+                        <WrapPanel Orientation="Horizontal" Margin="0,4,0,0">
+                            <Button Content="{ext:Translate {x:Static i18N:Keys.SpatialBlackholeRestart}}"
+                                    Command="{Binding RestartCoreAudio}"
+                                    Margin="0,0,8,6" />
+                            <Button Content="{ext:Translate {x:Static i18N:Keys.SpatialOpenAudioMidi}}"
+                                    Command="{Binding OpenAudioMidiSetup}"
+                                    Margin="0,0,8,6" />
+                            <Button Content="{ext:Translate {x:Static i18N:Keys.SpatialOpenSoundPref}}"
+                                    Command="{Binding OpenSoundSettings}"
+                                    Margin="0,0,8,6" />
+                        </WrapPanel>
+                    </StackPanel>
+
+                    <!-- Windows: Native WASAPI Loopback Info -->
+                    <StackPanel Spacing="6" IsVisible="{Binding IsWindows}">
+                        <Separator Height="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="0,4" />
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <fluent:SymbolIcon Symbol="CheckmarkCircle" FontSize="16" Foreground="SeaGreen" />
+                            <TextBlock Text="WASAPI Loopback Nativo (Windows 10/11)" FontWeight="Medium" />
+                        </StackPanel>
+                        <TextBlock Text="{ext:Translate {x:Static i18N:Keys.SpatialWindowsInfo}}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- Info Bar -->
             <controls:CustomInfoBar Title="{ext:Translate {x:Static i18N:Keys.PageSpatialAudio}}"
                                     IsClosable="False"
